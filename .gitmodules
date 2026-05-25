@@ -1,0 +1,6 @@
+[submodule "bsp/stm32l5xx-hal-driver"]
+	path = bsp/stm32l5xx-hal-driver
+	url = https://github.com/STMicroelectronics/stm32l5xx-hal-driver
+[submodule "bsp/cmsis-device-l5"]
+	path = bsp/cmsis-device-l5
+	url = https://github.com/STMicroelectronics/cmsis-device-l5
