@@ -97,6 +97,9 @@ i2c1: I2C.STM32F4_I2C @ sysbus 0x40005400
     EventInterrupt -> nvic@55
     ErrorInterrupt -> nvic@56
 
+adc1: Analog.STM32_ADC @ sysbus 0x42028000
+    IRQ->nvic@37
+
 rtc: STM32L_RTC @ sysbus <0x40002800, +0x400>
     -> exti@17
 

@@ -1,3 +1,4 @@
+#include "adc1.h"
 #include "cli.h"
 #include "cli_print.h"
 #include "uart1.h"
@@ -149,16 +150,16 @@ static void on_set_kd(EmbeddedCli *cli, char *args, void *context) {
 
 static void on_get_temp(EmbeddedCli *cli, char *args, void *context) {
   float *current_temperature = context;
+  float temperature_c = adc1_read_celsius();
 
   (void)cli;
   (void)args;
 
-  if (current_temperature == NULL) {
-    cli_log_error("Current temperature is unavailable");
-    return;
+  if (current_temperature != NULL) {
+    *current_temperature = temperature_c;
   }
 
-  cli_log_info("Current temperature=%.2f C", *current_temperature);
+  cli_log_info("Current temperature=%.2f C", temperature_c);
 }
 
 static void on_get_status(EmbeddedCli *cli, char *args, void *context) {
@@ -313,6 +314,7 @@ static const CliAppCommand app_commands[] = {
 
 int main(void) {
   uart1_init();
+  adc1_init();
   cli_init(app_commands, sizeof(app_commands) / sizeof(app_commands[0]));
 
   cli_log_info("Launching adc_pid_demo_stm32");

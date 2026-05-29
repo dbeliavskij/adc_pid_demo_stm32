@@ -1,0 +1,67 @@
+adc1: Python.PythonPeripheral @ sysbus 0x42028000
+    size: 0x400
+    initable: true
+    script: '''
+ISR_ADRDY = 1 << 0
+ISR_EOC = 1 << 2
+CR_ADEN = 1 << 0
+CR_ADSTART = 1 << 2
+CR_ADCAL = 1 << 31
+
+ADC1_ISR = 0x00
+ADC1_CR = 0x08
+ADC1_DR = 0x40
+ADC1_FEED = 0x3FC
+
+if request.IsInit:
+    channel_samples = [0] * 19
+    adc1_enabled = False
+    adc1_eoc = False
+    regs = {}
+else:
+    try:
+        channel_samples
+    except NameError:
+        channel_samples = [0] * 19
+        adc1_enabled = False
+        adc1_eoc = False
+        regs = {}
+
+    if request.IsRead:
+        if request.Offset == ADC1_ISR:
+            value = 0
+            if adc1_enabled:
+                value |= ISR_ADRDY
+            if adc1_eoc:
+                value |= ISR_EOC
+            request.Value = value
+        elif request.Offset == ADC1_CR:
+            value = regs.get(ADC1_CR, 0)
+            if adc1_enabled:
+                value |= CR_ADEN
+            request.Value = value
+        elif request.Offset == ADC1_DR:
+            request.Value = channel_samples[5] & 0xFFF
+        else:
+            request.Value = regs.get(request.Offset, 0)
+    elif request.IsWrite:
+        if request.Offset == ADC1_FEED:
+            channel = (request.Value >> 16) & 0x1F
+            sample = request.Value & 0xFFF
+            channel_samples[channel] = sample
+        elif request.Offset == ADC1_ISR:
+            if request.Value & ISR_EOC:
+                adc1_eoc = False
+        elif request.Offset == ADC1_CR:
+            value = request.Value
+            if value & CR_ADEN:
+                adc1_enabled = True
+            if value & CR_ADCAL:
+                value &= ~CR_ADCAL
+            if value & CR_ADSTART:
+                adc1_eoc = True
+                value &= ~CR_ADSTART
+            regs[ADC1_CR] = value
+        else:
+            regs[request.Offset] = request.Value
+'''

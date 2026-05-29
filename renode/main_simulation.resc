@@ -6,6 +6,7 @@ $name?="STM32L552"
 mach create $name
 
 machine LoadPlatformDescription @platforms/cpus/stm32l552.repl
+machine LoadPlatformDescription $ORIGIN/adc1.repl
 
 showAnalyzer usart1
 
@@ -17,4 +18,10 @@ macro reset
 """
 
 runMacro $reset
+
+# PA0 uses ADC1 channel 5 in firmware.
+# Feed format at 0x420283FC: (channel << 16) | raw12bit
+# Example: 3102 (decimal) raw on channel 5 ~= 2.5V ~= 25C
+sysbus WriteDoubleWord 0x420283FC 0x00050C1E
+
 start
