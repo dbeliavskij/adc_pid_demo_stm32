@@ -18,4 +18,5 @@ target_link_libraries(adc_pid_demo_stm32 PRIVATE
 target_link_options(adc_pid_demo_stm32 PRIVATE
     -T "${BSP_LINKER_SCRIPT}"
     -Wl,-Map=$<TARGET_FILE_DIR:adc_pid_demo_stm32>
+    -Wl,-u,_printf_float
 )

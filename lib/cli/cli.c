@@ -4,8 +4,11 @@
 #include "embedded_cli.h"
 #include "uart1.h"
 
+#include <errno.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define CLI_BUFFER_SIZE 1024U
 #define CLI_RX_BATCH_LIMIT 100U
@@ -46,6 +49,7 @@ static void cli_register_commands(const CliAppCommand *commands,
 
 void cli_init(const CliAppCommand *commands, size_t command_count) {
   EmbeddedCliConfig *config = embeddedCliDefaultConfig();
+  config->maxBindingCount = command_count;
 
   config->cliBuffer = cli_buffer;
   config->cliBufferSize = CLI_BUFFER_SIZE;
@@ -62,6 +66,60 @@ void cli_init(const CliAppCommand *commands, size_t command_count) {
   cli_print_init(cli);
   cli_register_commands(commands, command_count);
   embeddedCliProcess(cli);
+}
+
+bool cli_parse_uint8_arg(const char *arg, uint8_t *value) {
+  char *end = NULL;
+  unsigned long parsed;
+
+  if ((arg == NULL) || (value == NULL)) {
+    return false;
+  }
+
+  errno = 0;
+  parsed = strtoul(arg, &end, 10);
+
+  if ((errno != 0) || (end == arg) || (*end != '\0') || (parsed > UINT8_MAX)) {
+    return false;
+  }
+
+  *value = (uint8_t)parsed;
+  return true;
+}
+
+bool cli_parse_float_arg(const char *arg, float *value) {
+  char *end = NULL;
+
+  if ((arg == NULL) || (value == NULL)) {
+    return false;
+  }
+
+  errno = 0;
+  *value = strtof(arg, &end);
+
+  if ((errno != 0) || (end == arg) || (*end != '\0')) {
+    return false;
+  }
+
+  return true;
+}
+
+bool cli_parse_on_off_arg(const char *arg, bool *value) {
+  if ((arg == NULL) || (value == NULL)) {
+    return false;
+  }
+
+  if (strcmp(arg, "on") == 0) {
+    *value = true;
+    return true;
+  }
+
+  if (strcmp(arg, "off") == 0) {
+    *value = false;
+    return true;
+  }
+
+  return false;
 }
 
 void cli_process(void) {
