@@ -4,3 +4,9 @@
 [submodule "bsp/cmsis-device-l5"]
 	path = bsp/cmsis-device-l5
 	url = https://github.com/STMicroelectronics/cmsis-device-l5
+[submodule "bsp/cmsis-core"]
+	path = bsp/cmsis-core
+	url = https://github.com/STMicroelectronics/cmsis-core
+[submodule "lib/embedded-cli"]
+	path = lib/third_party/embedded-cli
+	url = https://github.com/funbiscuit/embedded-cli

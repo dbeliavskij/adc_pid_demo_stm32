@@ -9,7 +9,6 @@ find_program(CMAKE_OBJCOPY NAMES arm-none-eabi-objcopy)
 find_program(CMAKE_SIZE NAMES arm-none-eabi-size)
 find_program(CMAKE_GDB NAMES arm-none-eabi-gdb)
 
-set(CMAKE_EXECUTABLE_SUFFIX ".elf")
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)

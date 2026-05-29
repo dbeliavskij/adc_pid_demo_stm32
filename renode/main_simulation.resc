@@ -1,0 +1,20 @@
+:name: STM32L552 ADC PID Demo
+:description: Runs adc_pid_demo_stm32 firmware on STM32L552 with UART1 console output.
+
+using sysbus
+$name?="STM32L552"
+mach create $name
+
+machine LoadPlatformDescription @platforms/cpus/stm32l552.repl
+
+showAnalyzer usart1
+
+$bin?=@$ORIGIN/../build/Debug/adc_pid_demo_stm32
+
+macro reset
+"""
+    sysbus LoadELF $bin
+"""
+
+runMacro $reset
+start
