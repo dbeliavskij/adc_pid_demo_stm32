@@ -359,6 +359,7 @@ int main(void) {
   uart1_init();
   adc1_init();
   dout1_init();
+  tick1_init();
   cli_init(app_commands, sizeof(app_commands) / sizeof(app_commands[0]));
 
   cli_log_info("Launching adc_pid_demo_stm32");
