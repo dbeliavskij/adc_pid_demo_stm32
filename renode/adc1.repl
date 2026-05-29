@@ -21,6 +21,7 @@ COOL_RATE_C_PER_S = 0.5
 MAX_DT_S = 0.25
 TEMP_MIN_C = 0.0
 TEMP_MAX_C = 50.0
+ADC_VREF_V = 3.3
 
 if request.IsInit:
     channel_samples = [0] * 19
@@ -30,7 +31,7 @@ if request.IsInit:
     sim_temp_c = 20.0
     last_time = None
     last_heater_on = False
-    channel_samples[5] = 2482
+    channel_samples[5] = 1638
 else:
     try:
         channel_samples
@@ -70,8 +71,8 @@ else:
                     sim_temp_c = TEMP_MIN_C
                 if sim_temp_c > TEMP_MAX_C:
                     sim_temp_c = TEMP_MAX_C
-                voltage = (sim_temp_c / TEMP_MAX_C) * 5.0
-                raw = int((voltage / 3.3) * 4095.0 + 0.5)
+                voltage = (sim_temp_c / TEMP_MAX_C) * ADC_VREF_V
+                raw = int((voltage / ADC_VREF_V) * 4095.0 + 0.5)
                 if raw < 0:
                     raw = 0
                 if raw > 4095:
@@ -106,8 +107,8 @@ else:
             channel = (request.Value >> 16) & 0x1F
             sample = request.Value & 0xFFF
             channel_samples[channel] = sample
-            voltage = (float(sample) / 4095.0) * 3.3
-            sim_temp_c = (voltage / 5.0) * TEMP_MAX_C
+            voltage = (float(sample) / 4095.0) * ADC_VREF_V
+            sim_temp_c = (voltage / ADC_VREF_V) * TEMP_MAX_C
             if sim_temp_c < TEMP_MIN_C:
                 sim_temp_c = TEMP_MIN_C
             if sim_temp_c > TEMP_MAX_C:

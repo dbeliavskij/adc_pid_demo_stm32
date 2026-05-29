@@ -15,6 +15,8 @@ target_link_libraries(adc_pid_demo_stm32 PRIVATE
     cli_print
     adc
     dout
+    thermostat
+    tick
 )
 
 target_link_options(adc_pid_demo_stm32 PRIVATE

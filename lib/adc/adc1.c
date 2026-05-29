@@ -11,8 +11,10 @@
 #define ADC1_GPIO_PORT GPIOA
 #define ADC1_GPIO_PIN LL_GPIO_PIN_0
 
+/* Sensor: 0..5 V for 0..50 C (homework). Divider scales to 0..3.3 V at PA0. */
 #define ADC1_VREF_V 3.3f
 #define ADC1_SENSOR_MAX_V 5.0f
+#define ADC1_ADC_INPUT_MAX_V ADC1_VREF_V
 #define ADC1_TEMPERATURE_MAX_C 50.0f
 #define ADC1_MAX_RAW 4095U
 
@@ -133,9 +135,9 @@ float adc1_read_celsius(void)
         voltage = 0.0f;
     }
 
-    if (voltage > ADC1_SENSOR_MAX_V) {
-        voltage = ADC1_SENSOR_MAX_V;
+    if (voltage > ADC1_ADC_INPUT_MAX_V) {
+        voltage = ADC1_ADC_INPUT_MAX_V;
     }
 
-    return (voltage / ADC1_SENSOR_MAX_V) * ADC1_TEMPERATURE_MAX_C;
+    return (voltage / ADC1_ADC_INPUT_MAX_V) * ADC1_TEMPERATURE_MAX_C;
 }

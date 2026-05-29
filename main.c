@@ -2,6 +2,8 @@
 #include "cli.h"
 #include "cli_print.h"
 #include "dout1.h"
+#include "thermostat.h"
+#include "tick1.h"
 #include "uart1.h"
 
 #include <stdbool.h>
@@ -10,23 +12,7 @@
 #define TEMPERATURE_MIN_C 0U
 #define TEMPERATURE_MAX_C 50U
 
-typedef struct {
-  uint8_t set_temperature_c;
-  bool enabled;
-  float current_temperature_c;
-  float kp;
-  float ki;
-  float kd;
-} ThermostatState;
-
-static ThermostatState thermostat = {
-    .set_temperature_c = 21U,
-    .enabled = false,
-    .current_temperature_c = 20.0f,
-    .kp = 1.0f,
-    .ki = 0.1f,
-    .kd = 0.01f,
-};
+static Thermostat thermostat;
 
 static void on_set_temp(EmbeddedCli *cli, char *args, void *context) {
   uint8_t *stored_temperature = context;
@@ -233,34 +219,6 @@ static void on_get_kd(EmbeddedCli *cli, char *args, void *context) {
   cli_log_info("Kd=%.2f", *kd);
 }
 
-static void on_set_heater(EmbeddedCli *cli, char *args, void *context) {
-  bool requested_status;
-
-  (void)cli;
-  (void)context;
-
-  if (embeddedCliGetTokenCount(args) < 1U) {
-    cli_log_error("Usage: set_heater <on|off>");
-    return;
-  }
-
-  if (!cli_parse_on_off_arg(embeddedCliGetToken(args, 1U), &requested_status)) {
-    cli_log_error("Invalid heater status, use on or off");
-    return;
-  }
-
-  dout1_set_heater(requested_status);
-  cli_log_info("Heater set to %s", requested_status ? "on" : "off");
-}
-
-static void on_get_heater(EmbeddedCli *cli, char *args, void *context) {
-  (void)cli;
-  (void)args;
-  (void)context;
-
-  cli_log_info("Heater is %s", dout1_is_heater_on() ? "on" : "off");
-}
-
 static const CliAppCommand app_commands[] = {
     {
         .name = "set_temp",
@@ -280,21 +238,21 @@ static const CliAppCommand app_commands[] = {
         .name = "set_kp",
         .help = "Set PID Kp coefficient: set_kp <value>",
         .tokenize_args = true,
-        .context = &thermostat.kp,
+        .context = &thermostat.pid.Kp,
         .handler = on_set_kp,
     },
     {
         .name = "set_ki",
         .help = "Set PID Ki coefficient: set_ki <value>",
         .tokenize_args = true,
-        .context = &thermostat.ki,
+        .context = &thermostat.pid.Ki,
         .handler = on_set_ki,
     },
     {
         .name = "set_kd",
         .help = "Set PID Kd coefficient: set_kd <value>",
         .tokenize_args = true,
-        .context = &thermostat.kd,
+        .context = &thermostat.pid.Kd,
         .handler = on_set_kd,
     },
     {
@@ -322,36 +280,22 @@ static const CliAppCommand app_commands[] = {
         .name = "get_kp",
         .help = "Get PID Kp coefficient",
         .tokenize_args = false,
-        .context = &thermostat.kp,
+        .context = &thermostat.pid.Kp,
         .handler = on_get_kp,
     },
     {
         .name = "get_ki",
         .help = "Get PID Ki coefficient",
         .tokenize_args = false,
-        .context = &thermostat.ki,
+        .context = &thermostat.pid.Ki,
         .handler = on_get_ki,
     },
     {
         .name = "get_kd",
         .help = "Get PID Kd coefficient",
         .tokenize_args = false,
-        .context = &thermostat.kd,
+        .context = &thermostat.pid.Kd,
         .handler = on_get_kd,
-    },
-    {
-        .name = "set_heater",
-        .help = "Turn heater on or off: set_heater <on|off>",
-        .tokenize_args = true,
-        .context = NULL,
-        .handler = on_set_heater,
-    },
-    {
-        .name = "get_heater",
-        .help = "Get heater output state",
-        .tokenize_args = false,
-        .context = NULL,
-        .handler = on_get_heater,
     },
 };
 
@@ -360,11 +304,13 @@ int main(void) {
   adc1_init();
   dout1_init();
   tick1_init();
+  thermostat_init(&thermostat);
   cli_init(app_commands, sizeof(app_commands) / sizeof(app_commands[0]));
 
   cli_log_info("Launching adc_pid_demo_stm32");
 
   while (1) {
     cli_process();
+    thermostat_process(&thermostat);
   }
 }
