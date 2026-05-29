@@ -18,14 +18,33 @@ static void cli_write_char(EmbeddedCli *embedded_cli, char c) {
   uart1_write(&c, 1U);
 }
 
-static void on_hello(EmbeddedCli *embedded_cli, char *args, void *context) {
-  (void)embedded_cli;
-  (void)args;
-  (void)context;
-  cli_log_info("Hello from STM32L552");
+static void cli_register_commands(const CliAppCommand *commands,
+                                  size_t command_count) {
+  if (commands == NULL) {
+    return;
+  }
+
+  for (size_t i = 0U; i < command_count; ++i) {
+    const CliAppCommand *command = &commands[i];
+
+    CLI_LOG_ASSERT_MSG(command->name != NULL,
+                       "Command name is NULL at index %u", (unsigned)i);
+    CLI_LOG_ASSERT_MSG(command->handler != NULL,
+                       "Command handler is NULL for '%s'", command->name);
+
+    CLI_LOG_ASSERT_MSG(embeddedCliAddBinding(cli,
+                                             (CliCommandBinding){
+                                                 command->name,
+                                                 command->help,
+                                                 command->tokenize_args,
+                                                 command->context,
+                                                 command->handler,
+                                             }),
+                       "Failed to add command '%s'", command->name);
+  }
 }
 
-void cli_init(void) {
+void cli_init(const CliAppCommand *commands, size_t command_count) {
   EmbeddedCliConfig *config = embeddedCliDefaultConfig();
 
   config->cliBuffer = cli_buffer;
@@ -41,23 +60,13 @@ void cli_init(void) {
 
   cli->writeChar = cli_write_char;
   cli_print_init(cli);
-
-  CLI_LOG_ASSERT_MSG(
-      embeddedCliAddBinding(cli,
-                            (CliCommandBinding){
-                                "get_set_temp",
-                                "Returns currently set temperature",
-                                false,
-                                NULL,
-                                on_hello,
-                            }),
-      "Failed to add get_set_temp binding");
-
+  cli_register_commands(commands, command_count);
   embeddedCliProcess(cli);
 }
 
 void cli_process(void) {
   uint8_t loop_failsafe = CLI_RX_BATCH_LIMIT;
+
   while (uart1_rx_ready() && (loop_failsafe--)) {
     embeddedCliReceiveChar(cli, (char)uart1_read());
   }
