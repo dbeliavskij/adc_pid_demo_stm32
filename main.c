@@ -233,6 +233,34 @@ static void on_get_kd(EmbeddedCli *cli, char *args, void *context) {
   cli_log_info("Kd=%.2f", *kd);
 }
 
+static void on_set_heater(EmbeddedCli *cli, char *args, void *context) {
+  bool requested_status;
+
+  (void)cli;
+  (void)context;
+
+  if (embeddedCliGetTokenCount(args) < 1U) {
+    cli_log_error("Usage: set_heater <on|off>");
+    return;
+  }
+
+  if (!cli_parse_on_off_arg(embeddedCliGetToken(args, 1U), &requested_status)) {
+    cli_log_error("Invalid heater status, use on or off");
+    return;
+  }
+
+  dout1_set_heater(requested_status);
+  cli_log_info("Heater set to %s", requested_status ? "on" : "off");
+}
+
+static void on_get_heater(EmbeddedCli *cli, char *args, void *context) {
+  (void)cli;
+  (void)args;
+  (void)context;
+
+  cli_log_info("Heater is %s", dout1_is_heater_on() ? "on" : "off");
+}
+
 static const CliAppCommand app_commands[] = {
     {
         .name = "set_temp",
@@ -310,6 +338,20 @@ static const CliAppCommand app_commands[] = {
         .tokenize_args = false,
         .context = &thermostat.kd,
         .handler = on_get_kd,
+    },
+    {
+        .name = "set_heater",
+        .help = "Turn heater on or off: set_heater <on|off>",
+        .tokenize_args = true,
+        .context = NULL,
+        .handler = on_set_heater,
+    },
+    {
+        .name = "get_heater",
+        .help = "Get heater output state",
+        .tokenize_args = false,
+        .context = NULL,
+        .handler = on_get_heater,
     },
 };
 

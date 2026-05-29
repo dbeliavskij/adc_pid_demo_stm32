@@ -19,9 +19,9 @@ macro reset
 
 runMacro $reset
 
-# PA0 uses ADC1 channel 5 in firmware.
-# Feed format at 0x420283FC: (channel << 16) | raw12bit
-# Example: 3102 (decimal) raw on channel 5 ~= 2.5V ~= 25C
-sysbus WriteDoubleWord 0x420283FC 0x00050C1E
+# Thermal plant is modeled in adc1.repl:
+# - PA1 low (DOUT=0) -> heater ON -> temperature rises (~2 C/s)
+# - PA1 high (DOUT=1) -> heater OFF -> temperature falls (~0.5 C/s)
+# Use "set_heater on|off" in UART, then "get_temp" to observe changes.
 
 start

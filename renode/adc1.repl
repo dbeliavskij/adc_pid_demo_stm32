@@ -13,11 +13,24 @@ ADC1_CR = 0x08
 ADC1_DR = 0x40
 ADC1_FEED = 0x3FC
 
+GPIOA_ODR = 0x42020014
+HEATER_PIN_MASK = 0x2
+
+HEAT_RATE_C_PER_S = 2.0
+COOL_RATE_C_PER_S = 0.5
+MAX_DT_S = 0.25
+TEMP_MIN_C = 0.0
+TEMP_MAX_C = 50.0
+
 if request.IsInit:
     channel_samples = [0] * 19
     adc1_enabled = False
     adc1_eoc = False
     regs = {}
+    sim_temp_c = 20.0
+    last_time = None
+    last_heater_on = False
+    channel_samples[5] = 2482
 else:
     try:
         channel_samples
@@ -26,6 +39,50 @@ else:
         adc1_enabled = False
         adc1_eoc = False
         regs = {}
+        sim_temp_c = 20.0
+        last_time = None
+        last_heater_on = False
+
+    try:
+        machine = self.GetMachine()
+        odr = machine["sysbus"].ReadDoubleWord(GPIOA_ODR)
+        heater_on = (odr & HEATER_PIN_MASK) == 0
+        now = machine.ElapsedVirtualTime.TimeElapsed
+
+        try:
+            last_heater_on
+        except NameError:
+            last_heater_on = heater_on
+
+        if heater_on != last_heater_on:
+            last_time = now
+            last_heater_on = heater_on
+        elif last_time is not None:
+            dt = (now - last_time).TotalSeconds
+            if dt > MAX_DT_S:
+                dt = MAX_DT_S
+            if dt > 0.0:
+                if heater_on:
+                    sim_temp_c = sim_temp_c + HEAT_RATE_C_PER_S * dt
+                else:
+                    sim_temp_c = sim_temp_c - COOL_RATE_C_PER_S * dt
+                if sim_temp_c < TEMP_MIN_C:
+                    sim_temp_c = TEMP_MIN_C
+                if sim_temp_c > TEMP_MAX_C:
+                    sim_temp_c = TEMP_MAX_C
+                voltage = (sim_temp_c / TEMP_MAX_C) * 5.0
+                raw = int((voltage / 3.3) * 4095.0 + 0.5)
+                if raw < 0:
+                    raw = 0
+                if raw > 4095:
+                    raw = 4095
+                channel_samples[5] = raw
+            last_time = now
+        else:
+            last_time = now
+            last_heater_on = heater_on
+    except:
+        pass
 
     if request.IsRead:
         if request.Offset == ADC1_ISR:
@@ -49,6 +106,12 @@ else:
             channel = (request.Value >> 16) & 0x1F
             sample = request.Value & 0xFFF
             channel_samples[channel] = sample
+            voltage = (float(sample) / 4095.0) * 3.3
+            sim_temp_c = (voltage / 5.0) * TEMP_MAX_C
+            if sim_temp_c < TEMP_MIN_C:
+                sim_temp_c = TEMP_MIN_C
+            if sim_temp_c > TEMP_MAX_C:
+                sim_temp_c = TEMP_MAX_C
         elif request.Offset == ADC1_ISR:
             if request.Value & ISR_EOC:
                 adc1_eoc = False
