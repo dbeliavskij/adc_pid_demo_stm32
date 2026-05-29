@@ -10,3 +10,6 @@
 [submodule "lib/embedded-cli"]
 	path = lib/third_party/embedded-cli
 	url = https://github.com/funbiscuit/embedded-cli
+[submodule "lib/third_party/pid"]
+	path = lib/third_party/pid
+	url = https://github.com/pms67/PID

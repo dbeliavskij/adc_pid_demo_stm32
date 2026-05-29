@@ -5,3 +5,11 @@ add_library(embedded_cli STATIC
 target_include_directories(embedded_cli PUBLIC
     embedded-cli/lib/include
 )
+
+add_library(pid STATIC
+    pid/PID.c
+)
+
+target_include_directories(pid PUBLIC
+    pid
+)
