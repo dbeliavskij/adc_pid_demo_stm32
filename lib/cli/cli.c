@@ -1,5 +1,6 @@
 #include "cli.h"
 
+#include "cli_print.h"
 #include "embedded_cli.h"
 #include "uart1.h"
 
@@ -18,9 +19,10 @@ static void cli_write_char(EmbeddedCli *embedded_cli, char c) {
 }
 
 static void on_hello(EmbeddedCli *embedded_cli, char *args, void *context) {
+  (void)embedded_cli;
   (void)args;
   (void)context;
-  embeddedCliPrint(embedded_cli, "Hello from STM32L552\r\n");
+  cli_log_info("Hello from STM32L552");
 }
 
 void cli_init(void) {
@@ -38,14 +40,18 @@ void cli_init(void) {
   }
 
   cli->writeChar = cli_write_char;
+  cli_print_init(cli);
 
-  embeddedCliAddBinding(cli, (CliCommandBinding){
-                                 "get set temp",
-                                 "Returns currently set temperature",
-                                 false,
-                                 NULL,
-                                 on_hello,
-                             });
+  CLI_LOG_ASSERT_MSG(
+      embeddedCliAddBinding(cli,
+                            (CliCommandBinding){
+                                "get_set_temp",
+                                "Returns currently set temperature",
+                                false,
+                                NULL,
+                                on_hello,
+                            }),
+      "Failed to add get_set_temp binding");
 
   embeddedCliProcess(cli);
 }

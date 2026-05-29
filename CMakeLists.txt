@@ -12,6 +12,7 @@ add_executable(adc_pid_demo_stm32
 target_link_libraries(adc_pid_demo_stm32 PRIVATE
     cli
     uart
+    cli_print
 )
 
 target_link_options(adc_pid_demo_stm32 PRIVATE

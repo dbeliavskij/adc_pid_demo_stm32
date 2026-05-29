@@ -9,6 +9,7 @@ target_include_directories(cli
 
 target_link_libraries(cli
     PRIVATE
+        cli_print
         embedded_cli
         uart
 )
