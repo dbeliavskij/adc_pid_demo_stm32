@@ -14,6 +14,7 @@ target_link_libraries(adc_pid_demo_stm32 PRIVATE
     uart
     cli_print
     adc
+    dout
 )
 
 target_link_options(adc_pid_demo_stm32 PRIVATE

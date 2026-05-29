@@ -1,6 +1,7 @@
 #include "adc1.h"
 #include "cli.h"
 #include "cli_print.h"
+#include "dout1.h"
 #include "uart1.h"
 
 #include <stdbool.h>
@@ -315,6 +316,7 @@ static const CliAppCommand app_commands[] = {
 int main(void) {
   uart1_init();
   adc1_init();
+  dout1_init();
   cli_init(app_commands, sizeof(app_commands) / sizeof(app_commands[0]));
 
   cli_log_info("Launching adc_pid_demo_stm32");
